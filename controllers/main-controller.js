@@ -43,15 +43,13 @@ module.exports = (app, dbConnection) => {
                     if (results.length > 0) {
 
                         let user = {
-                            
+
                             "username": results[0].username,
                             "email": results[0].email,
                             "name": results[0].name,
                             "role": results[0].designation
 
                         }
-
-                        console.log(results[0].username);
 
                         // Load hash from your password DB.
                         res.status(200).send({
