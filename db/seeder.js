@@ -29,7 +29,11 @@ dbConnection.connect(function(err) {
         console.log("Seeder Connected to Database Successfuly!");
         console.log("Running SQL Seed...");
 
-        dbConnection.query(seedQuery, (err, results, fields) => {
+        const password = "password";
+
+        const hash = bcrypt.hashSync(password, 10);
+
+        dbConnection.query(seedQuery,[hash], (err, results, fields) => {
 
             if (err) {
                 
