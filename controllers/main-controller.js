@@ -8,7 +8,7 @@ module.exports = (app, dbConnection) => {
 
     if (!username) {
 
-        res.status(418).send({
+        res.status(200).send({
             "code": "418",
             "message": "Username is required!",
             "data": []
@@ -16,7 +16,7 @@ module.exports = (app, dbConnection) => {
         
     } else if (!password) {
 
-        res.status(418).send({
+        res.status(200).send({
             "code": "418",
             "message": "User password is required!",
             "data": []
@@ -32,7 +32,7 @@ module.exports = (app, dbConnection) => {
 
                 if(err) {
 
-                    res.status(418).send({
+                    res.status(200).send({
                         "code": "418",
                         "message": "Database user fetching error!",
                         "data": []
@@ -63,8 +63,7 @@ module.exports = (app, dbConnection) => {
                     } else {
 
 
-                        res.status(418).send({"message": ""});
-                        res.status(418).send({
+                        res.status(200).send({
                             "code": "418",
                             "message": "Authentication Unsuccessful!",
                             "data": []
