@@ -35,13 +35,12 @@ module.exports = (app, dbConnection) => {
             });
           } else {
             if (results.length > 0) {
-
               let user = {
                 username: results[0].username,
                 email: results[0].email,
                 name: results[0].name,
                 role: results[0].designation,
-                token: ""
+                token: "",
               };
 
               // Create token
@@ -49,7 +48,7 @@ module.exports = (app, dbConnection) => {
                 { user_id: user.email, username },
                 process.env.TOKEN_KEY,
                 {
-                  expiresIn: "2h",
+                  expiresIn: process.env.TOKEN_EXPIRATION_PERIOD,
                 }
               );
 
