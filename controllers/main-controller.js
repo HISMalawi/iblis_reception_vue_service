@@ -73,7 +73,104 @@ module.exports = (app, dbConnection) => {
     }
   });
 
-  app.post("/welcome", auth, (req, res) => {
-    res.status(200).send("Welcome 🙌 ");
+  app.post("/patients/search", auth, (req, res) => {
+
+    let searchString = req.body.value;
+
+    dbConnection.execute(
+      "SELECT * FROM `patients` WHERE `name` LIKE '%" + searchString + "%'",
+      (err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database patient fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            
+            // Load hash from your password DB.
+            res.status(200).send({
+              code: "200",
+              message: "Patient fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
   });
+
+  app.post("/visit_types", auth, (req, res) => {
+
+    dbConnection.execute(
+      "SELECT * FROM `visit_types`",
+      (err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database visit types fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            
+            // Load hash from your password DB.
+            res.status(200).send({
+              code: "200",
+              message: "Visit types fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+  });
+
+  app.post("/wards", auth, (req, res) => {
+
+    let ward_id = req.body.id;
+
+    dbConnection.execute(
+      "SELECT  `wards`.`id`, `wards`.`name` FROM `wards` INNER JOIN `visittype_wards` ON `visittype_wards`.`ward_id` = `wards`.`id` WHERE `visittype_wards`.`visit_type_id` = ?",
+      [`${ward_id}`],(err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database patient fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            
+            // Load hash from your password DB.
+            res.status(200).send({
+              code: "200",
+              message: "Patient fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+  });
+
 };
