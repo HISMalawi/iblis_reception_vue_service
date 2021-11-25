@@ -205,4 +205,38 @@ module.exports = (app, dbConnection) => {
     );
   });
 
+  app.post("/tests", auth, (req, res) => {
+
+    let specimen_type_id = req.body.specimen_type_id;
+
+    dbConnection.execute(
+      "SELECT `test_types`.`id`, `test_types`.`name`, `test_types`.`short_name`,`test_types`.`description`,`test_types`.`test_category_id`,`test_types`.`targetTAT`, `test_types`.`orderable_test`, `test_types`.`prevalence_threshold`, `test_types`.`accredited`, `test_types`.`print_device` FROM `test_types` INNER JOIN `testtype_specimentypes` ON `test_types`.`id` = `testtype_specimentypes`.`test_type_id` WHERE `testtype_specimentypes`.`specimen_type_id` = ?",
+      [`${specimen_type_id}`],(err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database patient fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            
+            // Load hash from your password DB.
+            res.status(200).send({
+              code: "200",
+              message: "Patient fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+  });
+
 };
