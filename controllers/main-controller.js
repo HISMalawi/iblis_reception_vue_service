@@ -173,4 +173,36 @@ module.exports = (app, dbConnection) => {
     );
   });
 
+  app.post("/specimen_types", auth, (req, res) => {
+
+    dbConnection.execute(
+      "SELECT * FROM `specimen_types`",
+      (err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database specimen types fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            
+            // Load hash from your password DB.
+            res.status(200).send({
+              code: "200",
+              message: "Specimen types fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+  });
+
 };
