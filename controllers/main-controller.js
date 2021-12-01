@@ -107,6 +107,46 @@ module.exports = (app, dbConnection) => {
     );
   });
 
+  app.put("/patients/register", auth, (req, res) => {
+
+    let date = new Date(); 
+
+    let patient = req.body.patient;
+
+    let dob_estimated = 0;
+
+    if (patient.dob == '') {
+      let yearOfBirth = date.getFullYear() - patient.age;
+      patient.dob = `${yearOfBirth}` + '-06-01'; 
+      
+      dob_estimated = 1;
+    }
+
+    dbConnection.execute(
+      "INSERT INTO `patients` (`patient_number`, `name`, `dob`, `dob_estimated`, `gender`, `email`, `address`, `phone_number`) VALUES ('0', ?, ?, ?, ?, ?, ?, ?)",[`${patient.firsname}` + " " + `${patient.lastname}`, `${patient.dob}`, `${dob_estimated}`, `${patient.gender}`, `${patient.email}`, `${patient.physicalAddress}`, `${patient.phoneNumber}`],
+      (err, results, fields) => {
+        if (err) {
+          
+          res.status(200).send({
+            code: "418",
+            message: "Database patient insert error!",
+            data: [],
+          });
+        } else {
+       
+            
+            res.status(200).send({
+              code: "200",
+              message: "Patient Registered Successful!",
+              data: [results],
+            });
+          
+        }
+      }
+    );
+  
+  });
+
   app.post("/visit_types", auth, (req, res) => {
 
     dbConnection.execute(
