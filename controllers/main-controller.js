@@ -89,7 +89,6 @@ module.exports = (app, dbConnection) => {
         } else {
           if (results.length > 0) {
             
-            // Load hash from your password DB.
             res.status(200).send({
               code: "200",
               message: "Patient fetching Successful!",
@@ -118,12 +117,12 @@ module.exports = (app, dbConnection) => {
     if (patient.dob == '') {
       let yearOfBirth = date.getFullYear() - patient.age;
       patient.dob = `${yearOfBirth}` + '-06-01'; 
-      
+
       dob_estimated = 1;
     }
 
     dbConnection.execute(
-      "INSERT INTO `patients` (`patient_number`, `name`, `dob`, `dob_estimated`, `gender`, `email`, `address`, `phone_number`) VALUES ('0', ?, ?, ?, ?, ?, ?, ?)",[`${patient.firstname}` + " " + `${patient.lastname}`, `${patient.dob}`, `${dob_estimated}`, `${patient.gender}`, `${patient.email}`, `${patient.physicalAddress}`, `${patient.phoneNumber}`],
+      "INSERT INTO `patients` (`patient_number`, `name`, `dob`, `dob_estimated`, `gender`, `email`, `address`, `phone_number`, `external_patient_number`) VALUES ('0', ?, ?, ?, ?, ?, ?, ?,?)",[`${patient.firstname}` + " " + `${patient.lastname}`, `${patient.dob}`, `${dob_estimated}`, `${patient.gender}`, `${patient.email}`, `${patient.physicalAddress}`, `${patient.phoneNumber}`, `${patient.externalPatientNumber}`],
       (err, results, fields) => {
         if (err) {
           
