@@ -123,7 +123,7 @@ module.exports = (app, dbConnection) => {
     }
 
     dbConnection.execute(
-      "INSERT INTO `patients` (`patient_number`, `name`, `dob`, `dob_estimated`, `gender`, `email`, `address`, `phone_number`) VALUES ('0', ?, ?, ?, ?, ?, ?, ?)",[`${patient.firsname}` + " " + `${patient.lastname}`, `${patient.dob}`, `${dob_estimated}`, `${patient.gender}`, `${patient.email}`, `${patient.physicalAddress}`, `${patient.phoneNumber}`],
+      "INSERT INTO `patients` (`patient_number`, `name`, `dob`, `dob_estimated`, `gender`, `email`, `address`, `phone_number`) VALUES ('0', ?, ?, ?, ?, ?, ?, ?)",[`${patient.firstname}` + " " + `${patient.lastname}`, `${patient.dob}`, `${dob_estimated}`, `${patient.gender}`, `${patient.email}`, `${patient.physicalAddress}`, `${patient.phoneNumber}`],
       (err, results, fields) => {
         if (err) {
           
