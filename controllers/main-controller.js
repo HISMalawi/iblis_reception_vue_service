@@ -139,14 +139,39 @@ module.exports = (app, dbConnection) => {
             data: [],
           });
         } else {
-          res.status(200).send({
-            code: "200",
-            message: "Patient Registered Successful!",
-            data: [results],
-          });
+
+          AddPatientNumber(results.insertId);
+          
         }
       }
     );
+
+    function AddPatientNumber(patient_id) {
+
+      dbConnection.query(
+        "UPDATE `patients` SET `patient_number` = ? WHERE (`id` = ?)",
+        [
+          `${patient_id}`,
+          `${patient_id}`
+        ],
+        (err, results, fields) => {
+          if (err) {
+            res.status(200).send({
+              code: "418",
+              message: "Database add patient number insert error!",
+              data: [],
+            });
+          } else {
+            res.status(200).send({
+              code: "200",
+              message: "Patient Registered Successful!",
+              data: [results],
+            });
+          }
+        }
+      );
+      
+    }
   });
 
   app.post("/visit_types", auth, (req, res) => {
