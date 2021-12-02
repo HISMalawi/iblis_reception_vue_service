@@ -308,46 +308,78 @@ module.exports = (app, dbConnection) => {
 
     let order = req.body.order;
 
-    let visit_type_id = order.visit_type_id;
-    let requesting_location_id = order.requesting_location_id;
+    let visit_type = order.visit_type;
+    let requesting_location = order.requesting_location;
     let requesting_physician = order.requesting_physician;
     let specimen_type_id = order.specimen_type_id;
     let tests = order.tests;
     let patient = order.patient;
     let user = order.user;
 
-    dbConnection.query(
-      "INSERT INTO `specimens` (`specimen_type_id`, `accession_number`, `tracking_number`, `priority`, `specimen_status_id`, `accepted_by`, `rejected_by`, `date_of_collection`) VALUES (?,?,?,?,?,?,?,?)",
-      [
-        `${specimen_type_id}`,
-        "UFC2100000000",
-        "XUFC2100000000",
-        "Routine",
-        1,
-        `${user.id}`,
-        0,
-        `${now}`,
-      ],
-      (err, results, fields) => {
-        if (err) {
-          res.status(200).send({
-            code: "418",
-            message: "Database Specimen insert error!",
-            data: [],
-          });
-        } else {
 
-          InsertTests(results.insertId);
+    InsertVisit();
+    
 
+    function InsertVisit() {
+
+      dbConnection.query(
+        "INSERT INTO `visits` (`patient_id`, `visit_type`, `ward_or_location`, `created_at`, `updated_at`) VALUES (?,?,?,?,?)",
+        [
+          `${patient.id}`,
+          `${visit_type.name}`,
+          `${requesting_location.name}`,
+          `${now}`,
+          `${now}`,
+        ],
+        (err, results, fields) => {
+          if (err) {
+            res.status(200).send({
+              code: "418",
+              message: "Database Visit insert error!",
+              data: [],
+            });
+          } else {
+            
+            IsertSpecimen(results.insertId);
+  
+          }
         }
-      }
-    );
-
-    function InsertVisit(params) {
+      );
       
     }
 
-    function InsertTests(visit_id) {
+    function IsertSpecimen(visit_id) {
+
+      dbConnection.query(
+        "INSERT INTO `specimens` (`specimen_type_id`, `accession_number`, `tracking_number`, `priority`, `specimen_status_id`, `accepted_by`, `rejected_by`, `date_of_collection`) VALUES (?,?,?,?,?,?,?,?)",
+        [
+          `${specimen_type_id}`,
+          "UFC2100000000",
+          "XUFC2100000000",
+          "Routine",
+          1,
+          `${user.id}`,
+          0,
+          `${now}`,
+        ],
+        (err, results, fields) => {
+          if (err) {
+            res.status(200).send({
+              code: "418",
+              message: "Database Specimen insert error!",
+              data: [],
+            });
+          } else {
+  
+            InsertTests(visit_id,results.insertId);
+  
+          }
+        }
+      );
+      
+    }
+
+    function InsertTests(visit_id, specimen_id) {
 
       let orders = [];
 
@@ -358,7 +390,7 @@ module.exports = (app, dbConnection) => {
           orders.push([
             `${visit_id}`,
             `${test.id}`,
-            `${specimen_type_id}`,
+            `${specimen_id}`,
             2,
             `${user.id}`,
             `${user.id}`,
@@ -451,5 +483,7 @@ module.exports = (app, dbConnection) => {
 
 
     }
+
+
   });
 };
