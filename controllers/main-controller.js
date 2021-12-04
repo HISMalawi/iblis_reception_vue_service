@@ -486,4 +486,36 @@ module.exports = (app, dbConnection) => {
 
 
   });
+
+  app.post("/orders/search", auth, (req, res) => {
+
+    let tracking_number = req.body.tracking_number;
+
+    dbConnection.query(
+      "SELECT * FROM `specimens` WHERE `tracking_number` = ?", [`${tracking_number}`],
+      (err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database Order fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            res.status(200).send({
+              code: "200",
+              message: "Order fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+  });
 };
