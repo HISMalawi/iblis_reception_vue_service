@@ -487,12 +487,54 @@ module.exports = (app, dbConnection) => {
 
   });
 
+  // app.post("/orders/search", auth, (req, res) => {
+
+  //   let tracking_number = req.body.tracking_number;
+
+  //   dbConnection.query(
+  //     "SELECT * FROM `specimens` WHERE `tracking_number` = ?", [`${tracking_number}`],
+  //     (err, results, fields) => {
+  //       if (err) {
+  //         res.status(200).send({
+  //           code: "418",
+  //           message: "Database Order fetching error!",
+  //           data: [],
+  //         });
+  //       } else {
+  //         if (results.length > 0) {
+  //           res.status(200).send({
+  //             code: "200",
+  //             message: "Order fetching Successful!",
+  //             data: [results],
+  //           });
+  //         } else {
+  //           res.status(200).send({
+  //             code: "418",
+  //             message: "No data available!",
+  //             data: [],
+  //           });
+  //         }
+  //       }
+  //     }
+  //   );
+  // });
+
   app.post("/orders/search", auth, (req, res) => {
 
     let tracking_number = req.body.tracking_number;
 
+    let specimen_id;
+    let specimen_type;
+    let location;
+    let visit_id;
+    let visit_type;
+    let requesting_physician;
+    let tests = [];
+    let patient_id;
+    let patient;
+
     dbConnection.query(
-      "SELECT * FROM `specimens` WHERE `tracking_number` = ?", [`${tracking_number}`],
+      "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `tracking_number` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`", [`${tracking_number}`],
       (err, results, fields) => {
         if (err) {
           res.status(200).send({
@@ -502,11 +544,15 @@ module.exports = (app, dbConnection) => {
           });
         } else {
           if (results.length > 0) {
-            res.status(200).send({
-              code: "200",
-              message: "Order fetching Successful!",
-              data: [results],
-            });
+
+            let data = results[0];
+
+            specimen_id = data.id;
+
+            specimen_type = data.specimen_type;
+
+            GetTests();
+
           } else {
             res.status(200).send({
               code: "418",
@@ -517,5 +563,136 @@ module.exports = (app, dbConnection) => {
         }
       }
     );
+
+      function GetTests() {
+
+        dbConnection.query(
+          "SELECT `tests`.`id`, `test_types`.`name` AS `test_name`, `tests`.`visit_id`, `tests`.`test_type_id`, `tests`.`specimen_id`, `tests`.`interpretation`, `tests`.`test_status_id`, `tests`.`created_by`, `tests`.`tested_by`, `tests`.`verified_by`, `tests`.`requested_by`, `tests`.`time_created`, `tests`.`time_started`, `tests`.`time_completed`, `tests`.`time_verified`, `tests`.`panel_id`, `tests`.`time_sent`, `tests`.`external_id`, `tests`.`not_done_reasons`, `tests`.`person_talked_to_for_not_done` FROM `tests`, `test_types` WHERE `specimen_id` = ? AND `tests`.`test_type_id` = `test_types`.`id`", [`${specimen_id}`],
+          (err, results, fields) => {
+            if (err) {
+
+              console.log(err);
+
+              res.status(200).send({
+                code: "418",
+                message: "Database Order fetching error!",
+                data: [],
+              });
+            } else {
+              if (results.length > 0) {
+
+                visit_id = results[0].visit_id;
+
+                requesting_physician = results[0].requested_by;
+
+                tests = results;
+
+                GetVisitInfo();
+    
+              } else {
+                res.status(200).send({
+                  code: "418",
+                  message: "No data available!",
+                  data: [],
+                });
+              }
+            }
+          }
+        );
+        
+      }
+
+
+      function GetVisitInfo() {
+
+        dbConnection.query(
+          "SELECT * FROM `visits` WHERE `id` = ?", [`${visit_id}`],
+          (err, results, fields) => {
+            if (err) {
+              res.status(200).send({
+                code: "418",
+                message: "Database Order fetching error!",
+                data: [],
+              });
+            } else {
+              if (results.length > 0) {
+
+                location = results[0].ward_or_location;
+                visit_type = results[0].visit_type;
+                patient_id = results[0].patient_id;
+
+                GetPatient();
+    
+              } else {
+                res.status(200).send({
+                  code: "418",
+                  message: "No data available!",
+                  data: [],
+                });
+              }
+            }
+          }
+        );
+        
+      }
+
+
+      function GetPatient() {
+
+        dbConnection.query(
+          "SELECT * FROM `patients` WHERE `patient_number` = ?",[`${patient_id}`],
+          (err, results, fields) => {
+            if (err) {
+              res.status(200).send({
+                code: "418",
+                message: "Database patient fetching error!",
+                data: [],
+              });
+            } else {
+              if (results.length > 0) {
+                
+                patient = results;
+
+                SendResponse();
+                
+              } else {
+                res.status(200).send({
+                  code: "418",
+                  message: "No data available!",
+                  data: [],
+                });
+              }
+            }
+          }
+        );
+        
+      }
+
+      function SendResponse() {
+
+        let data = [];
+
+        data.push({
+          id: specimen_id,
+          specimen_type: specimen_type,
+          tracking_number: tracking_number,
+          location: location,
+          tests: tests,
+          patient: patient,
+          visit_type :visit_type,
+          requesting_physician:requesting_physician,
+        });
+
+
+        res.status(200).send({
+          code: "200",
+          message: "Order fetch successful!",
+          data: [data],
+        });
+
+        
+      }
+
+
   });
 };
