@@ -487,38 +487,6 @@ module.exports = (app, dbConnection) => {
 
   });
 
-  // app.post("/orders/search", auth, (req, res) => {
-
-  //   let tracking_number = req.body.tracking_number;
-
-  //   dbConnection.query(
-  //     "SELECT * FROM `specimens` WHERE `tracking_number` = ?", [`${tracking_number}`],
-  //     (err, results, fields) => {
-  //       if (err) {
-  //         res.status(200).send({
-  //           code: "418",
-  //           message: "Database Order fetching error!",
-  //           data: [],
-  //         });
-  //       } else {
-  //         if (results.length > 0) {
-  //           res.status(200).send({
-  //             code: "200",
-  //             message: "Order fetching Successful!",
-  //             data: [results],
-  //           });
-  //         } else {
-  //           res.status(200).send({
-  //             code: "418",
-  //             message: "No data available!",
-  //             data: [],
-  //           });
-  //         }
-  //       }
-  //     }
-  //   );
-  // });
-
   app.post("/orders/search", auth, (req, res) => {
 
     let tracking_number = req.body.tracking_number;
@@ -567,7 +535,7 @@ module.exports = (app, dbConnection) => {
       function GetTests() {
 
         dbConnection.query(
-          "SELECT `tests`.`id`, `test_types`.`name` AS `test_name`, `tests`.`visit_id`, `tests`.`test_type_id`, `tests`.`specimen_id`, `tests`.`interpretation`, `tests`.`test_status_id`, `tests`.`created_by`, `tests`.`tested_by`, `tests`.`verified_by`, `tests`.`requested_by`, `tests`.`time_created`, `tests`.`time_started`, `tests`.`time_completed`, `tests`.`time_verified`, `tests`.`panel_id`, `tests`.`time_sent`, `tests`.`external_id`, `tests`.`not_done_reasons`, `tests`.`person_talked_to_for_not_done` FROM `tests`, `test_types` WHERE `specimen_id` = ? AND `tests`.`test_type_id` = `test_types`.`id`", [`${specimen_id}`],
+          "SELECT `tests`.`id`, `test_types`.`name` AS `test_name`,`tests`.`visit_id`, `tests`.`test_type_id`, `tests`.`specimen_id`, `tests`.`interpretation`, `tests`.`test_status_id`, `tests`.`created_by`, `tests`.`tested_by`, `tests`.`verified_by`, `tests`.`requested_by`, `tests`.`time_created`, `tests`.`time_started`, `tests`.`time_completed`, `tests`.`time_verified`, `tests`.`panel_id`, `tests`.`time_sent`, `tests`.`external_id`, `tests`.`not_done_reasons`, `tests`.`person_talked_to_for_not_done` FROM `tests`, `test_types` WHERE `specimen_id` = ? AND `tests`.`test_type_id` = `test_types`.`id`", [`${specimen_id}`],
           (err, results, fields) => {
             if (err) {
 
@@ -694,5 +662,39 @@ module.exports = (app, dbConnection) => {
       }
 
 
+  });
+
+  app.post("/test/results", auth, (req, res) => {
+    let test_id = req.body.test_id;
+
+    dbConnection.query(
+      "SELECT `test_results`.`id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+      [`${test_id}`],
+      (err, results, fields) => {
+        if (err) {
+
+          console.log(err);
+          res.status(200).send({
+            code: "418",
+            message: "Database Test Results fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            res.status(200).send({
+              code: "200",
+              message: "Test Results fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
   });
 };
