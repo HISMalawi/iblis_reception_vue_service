@@ -361,10 +361,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
   
             max_acc_num = 1;
           }
-
-          console.log(FACILITY_CODE);
-          console.log(year);
-          console.log(padLeadingZeros(max_acc_num,8));
   
           accession_number = FACILITY_CODE + year + padLeadingZeros(max_acc_num,8);
 
@@ -487,54 +483,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         }
       );
       
-      
-      // tests.forEach(test => {
-       
-
-      //   dbConnection.execute(
-      //     "INSERT INTO `tests` (`visit_id`, `test_type_id`, `specimen_id`, `test_status_id`, `created_by`, `tested_by`, `verified_by`, `requested_by`, `time_created`, `not_done_reasons`, `person_talked_to_for_not_done`) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-      //     [
-      //       `${visit_id}`,
-      //       `${test.id}`,
-      //       `${specimen_type_id}`,
-      //       2,
-      //       `${user.id}`,
-      //       `${user.id}`,
-      //       `${user.id}`,
-      //       `${requesting_physician}`,
-      //       `${now}`,
-      //       "null",
-      //       "null",
-      //     ],
-      //     (err, results, fields) => {
-      //       if (err) {
-
-      //         errors = true;
-      //         return;
-
-      //         res.status(200).send({
-      //           code: "418",
-      //           message: "Database Test insert error!",
-      //           data: [],
-      //         });    
-
-      //       } else {
-
-      //         res.status(200).send({
-      //           code: "200",
-      //           message: "Order added Successful!",
-      //           data: [],
-      //         });
-
-      //       }
-            
-      //     }
-      //   );
-
-      //   console.log(errors);
-
-      // });
-
 
     }
 
