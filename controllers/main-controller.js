@@ -4,7 +4,16 @@ const auth = require("../middleware/auth");
 // Load .env variables
 require("dotenv").config({ path: __dirname + "/../.env" });
 
-module.exports = (app, dbConnection) => {
+module.exports = (app, dbConnection, FACILITY_CODE) => {
+
+  
+  function padLeadingZeros(num, size) {
+    var s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
+  
+  }
+
   app.post("/users/authenticate", (req, res) => {
     let username = req.body.username;
     let password = req.body.password;
@@ -301,10 +310,19 @@ module.exports = (app, dbConnection) => {
   });
 
   app.put("/orders/create", auth, (req, res) => {
+
     let now = new Date()
       .toISOString()
       .replace(/T/, " ") // replace T with a space
       .replace(/\..+/, "");
+
+    let date = new Date()
+
+    let year = date.getFullYear().toString().substring(2);
+
+    let record;
+    let max_acc_num;
+    let sentinel = 99999999;
 
     let order = req.body.order;
 
@@ -316,9 +334,45 @@ module.exports = (app, dbConnection) => {
     let patient = order.patient;
     let user = order.user;
 
+    let accession_number = "";
 
-    InsertVisit();
-    
+    dbConnection.query(
+      "SELECT * FROM `specimens`  WHERE `accession_number` IS NOT NULL ORDER BY `id` DESC LIMIT 1",
+      (err, results, fields) => {
+        if (err) {
+          
+        } else {
+            
+          if (results.length > 0) {
+            
+            record = results[0];
+  
+            max_acc_num = Number(record.accession_number.substring(record.accession_number.length - 8));
+   
+            if (max_acc_num < sentinel){
+  
+              max_acc_num += 1;
+  
+            }else{
+              max_acc_num = 1;
+            }
+            
+          } else {
+  
+            max_acc_num = 1;
+          }
+
+          console.log(FACILITY_CODE);
+          console.log(year);
+          console.log(padLeadingZeros(max_acc_num,8));
+  
+          accession_number = FACILITY_CODE + year + padLeadingZeros(max_acc_num,8);
+
+          InsertVisit();
+
+        }
+      }
+    );
 
     function InsertVisit() {
 
@@ -354,8 +408,8 @@ module.exports = (app, dbConnection) => {
         "INSERT INTO `specimens` (`specimen_type_id`, `accession_number`, `tracking_number`, `priority`, `specimen_status_id`, `accepted_by`, `rejected_by`, `date_of_collection`) VALUES (?,?,?,?,?,?,?,?)",
         [
           `${specimen_type_id}`,
-          "UFC2100000000",
-          "XUFC2100000000",
+          `${accession_number}`,
+          `X${accession_number}`,
           "Routine",
           1,
           `${user.id}`,
@@ -424,7 +478,7 @@ module.exports = (app, dbConnection) => {
 
             res.status(200).send({
               code: "200",
-              message: "Order added Successful!",
+              message: "Order added Successfuly! Accession Number : " +`${accession_number}`,
               data: [],
             });
 
@@ -502,7 +556,7 @@ module.exports = (app, dbConnection) => {
     let patient;
 
     dbConnection.query(
-      "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `tracking_number` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`", [`${tracking_number}`],
+      "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE (`specimens`.`tracking_number` = ? OR `specimens`.`accession_number` = ?) AND `specimen_types`.`id` = `specimens`.`specimen_type_id`", [`${tracking_number}`,`${tracking_number}`],
       (err, results, fields) => {
         if (err) {
           res.status(200).send({

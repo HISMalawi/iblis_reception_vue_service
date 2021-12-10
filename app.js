@@ -10,7 +10,9 @@ const mainController = require('./controllers/main-controller');
 require("dotenv").config({ path: __dirname + '/./.env' });
 
 const app = express();
+
 const PORT = process.env.APP_PORT;
+const FACILITY_CODE = process.env.FACILITY_CODE;
 
 app.use(cors());
 app.use(express.json());
@@ -37,6 +39,6 @@ dbConnection.connect(function(err) {
     
 });
 
-mainController(app, dbConnection);
+mainController(app, dbConnection, FACILITY_CODE);
 
 app.listen(PORT, () => console.log(`It's alive on http://localhost:${PORT}`));
