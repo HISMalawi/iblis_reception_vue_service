@@ -246,6 +246,37 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     );
   });
 
+  app.post("/all_wards", (req, res) => {
+
+    dbConnection.query(
+      "SELECT  `id`, `name` FROM `wards`",
+      (err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database patient fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+            
+            res.status(200).send({
+              code: "200",
+              message: "Location fetching Successful!",
+              data: [results],
+            });
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+  });
+
   app.post("/specimen_types", auth, (req, res) => {
     dbConnection.query(
       "SELECT * FROM `specimen_types`",
@@ -472,10 +503,14 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
           } else {
 
+            let data =  {
+              "accessionNumber" : accession_number
+            }
+
             res.status(200).send({
               code: "200",
               message: "Order added Successfuly! Accession Number : " +`${accession_number}`,
-              data: [],
+              data: data,
             });
 
           }
