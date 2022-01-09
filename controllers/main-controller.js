@@ -345,6 +345,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
     function GetSpecimes() {
 
+      tests.sort().reverse();
+
       for (let index = 0; index < tests.length; index++) {
         const element = tests[index];
 
