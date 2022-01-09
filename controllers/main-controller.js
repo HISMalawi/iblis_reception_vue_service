@@ -291,10 +291,14 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
              let element = results[index];
 
               visit_ids.push(element.id);
+
+              if (index + 1 == results.length) {
+
+                GetTests();
+                
+              } 
              
             }
-
-            GetTests();
 
           } else {
             res.status(200).send({
