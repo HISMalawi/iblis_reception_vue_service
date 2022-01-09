@@ -362,8 +362,12 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                 data: [],
               });
             } else {
-  
-              specimens.push(results);
+              
+              if (results.length > 0) {
+
+                specimens.push(results[0]);
+                
+              }
 
               if (index + 1 == tests.length) {
 
