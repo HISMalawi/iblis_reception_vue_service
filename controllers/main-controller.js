@@ -900,7 +900,11 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
           } else {
             if (results.length > 0) {
 
-                tests_results.push(results);
+                results.forEach(result => {
+
+                  tests_results.push(result);
+                  
+                });
 
                 if (index + 1 == tests.length) {
 
