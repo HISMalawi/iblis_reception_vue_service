@@ -268,6 +268,22 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
   app.post("/ward/orders", auth, (req, res) => {
     let ward = req.body.ward;
 
+    let fromDate = new Date(req.body.from)
+    .toISOString()
+    .replace(/T/, " ") // replace T with a space
+    .replace(/\..+/, "");
+
+    let toDateBefore = new Date(req.body.to)
+    
+    toDateBefore.setDate(toDateBefore.getDate() + 1);
+
+    let toDate = new Date(toDateBefore)
+    .toISOString()
+    .replace(/T/, " ") // replace T with a space
+    .replace(/\..+/, "");
+
+    console.log(toDate)
+
     let visit_ids = [];
 
     let tests = [];
@@ -279,8 +295,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let specimen_ids = [];
 
     dbConnection.query(
-      "SELECT  `id` FROM `visits` WHERE `ward_or_location` = ?",
-      [`${ward}`],
+      "SELECT  `id` FROM `visits` WHERE `ward_or_location` = ? AND `created_at` BETWEEN ? AND ?",
+      [`${ward}`, `${fromDate}`, `${toDate}`],
       (err, results, fields) => {
         if (err) {
           res.status(200).send({
