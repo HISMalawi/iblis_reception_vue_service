@@ -818,9 +818,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     }
 
     function SendResponse() {
-      let data = [];
 
-      data.push({
+      let orders = [{
         id: specimen_id,
         specimen_type: specimen_type,
         tracking_number: tracking_number,
@@ -829,12 +828,17 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         patient: patient,
         visit_type: visit_type,
         requesting_physician: requesting_physician,
-      });
+      }];
+
+      let data = {
+        orders:orders,
+        tests:tests
+      };
 
       res.status(200).send({
         code: "200",
         message: "Order fetch successful!",
-        data: [data],
+        data: data,
       });
     }
   });
@@ -843,7 +847,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let test_id = req.body.test_id;
 
     dbConnection.query(
-      "SELECT `test_results`.`id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+      "SELECT `test_results`.`id`, `test_results`.`measure_id`,`test_results`.`test_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
       [`${test_id}`],
       (err, results, fields) => {
         if (err) {
@@ -870,5 +874,61 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         }
       }
     );
+  });
+
+  app.post("/tests/results", auth, (req, res) => {
+    
+    let tests = req.body.tests;
+
+    let tests_results = []
+
+    for (let index = 0; index < tests.length; index++) {
+
+      let test = tests[index];
+
+      dbConnection.query(
+        "SELECT `test_results`.`id`,`test_results`.`test_id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+        [`${test.id}`],
+        (err, results, fields) => {
+          if (err) {
+            console.log(err);
+            res.status(200).send({
+              code: "418",
+              message: "Database Test Results fetching error!",
+              data: [],
+            });
+          } else {
+            if (results.length > 0) {
+
+                tests_results.push(results);
+
+                if (index + 1 == tests.length) {
+
+                  res.status(200).send({
+                    code: "200",
+                    message: "Test Results fetching Successful!",
+                    data: tests_results,
+                  });
+                  
+                }  
+            } else {
+
+              if (index + 1 == tests.length) {
+
+                res.status(200).send({
+                  code: "200",
+                  message: "Test Results fetching Successful!",
+                  data: tests_results,
+                });
+                
+              } 
+
+            }
+          }
+        }
+      );
+      
+    }
+
   });
 };
