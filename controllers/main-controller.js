@@ -272,7 +272,11 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
     let tests = [];
 
+    let tests_with_results = [];
+
     let specimens = [];
+
+    let specimen_ids = [];
 
     dbConnection.query(
       "SELECT  `id` FROM `visits` WHERE `ward_or_location` = ?",
@@ -293,6 +297,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
               visit_ids.push(element.id);
 
               if (index + 1 == results.length) {
+
+                // console.log("visits: "+ visit_ids.length);
 
                 GetTests();
                 
@@ -315,7 +321,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
       for (let index = 0; index < visit_ids.length; index++) {
         const element = visit_ids[index];
-
+       
         dbConnection.query(
           "SELECT * FROM `tests` WHERE `visit_id` = ?",
           [
@@ -330,12 +336,66 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                 data: [],
               });
             } else {
-  
-              tests.push(element);
+
+              for (let index = 0; index < results.length; index++) {
+
+                tests.push(results[index]);
+
+                if (!specimen_ids.includes(results[index].specimen_id)) {
+                  
+                  specimen_ids.push(results[index].specimen_id);
+
+                } 
+                
+              }
 
               if (index + 1 == visit_ids.length) {
 
-                GetSpecimes();
+                // console.log("tests: "+ tests.length);
+
+                GetTestsWithResults();  
+              }  
+  
+            }
+          }
+        );
+        
+      }
+  
+    }
+
+    function GetTestsWithResults() {
+
+      for (let index = 0; index < tests.length; index++) {
+        const element = tests[index].id;
+
+        dbConnection.query(
+          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+          [
+            `${element}`
+          ],
+          (err, results, fields) => {
+            if (err) {
+  
+              res.status(200).send({
+                code: "418",
+                message: "Database tests fetching error!",
+                data: [],
+              });
+            } else {
+
+              if (results.length > 0) {
+
+                tests_with_results.push(tests[index]);
+                
+              }
+
+              if (index + 1 == tests.length) {
+
+                
+                // console.log("tests with results: "+ tests_with_results.length);
+
+                GetSpecimes(); 
                 
               }  
   
@@ -350,10 +410,11 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     function GetSpecimes() {
 
       tests.sort().reverse();
+      specimen_ids.sort().reverse();
 
-      for (let index = 0; index < tests.length; index++) {
-        const element = tests[index];
-
+      for (let index = 0; index < specimen_ids.length; index++) {
+        const element = specimen_ids[index];
+        
         dbConnection.query(
           "SELECT * FROM `specimens` WHERE `id` = ?",
           [
@@ -375,12 +436,19 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                 
               }
 
-              if (index + 1 == tests.length) {
+              if (index + 1 == specimen_ids.length) {
+
+                // console.log("specimens: "+ specimen_ids.length);
+
+                let data = {
+                  "specimens":specimens,
+                  "tests_with_results": tests_with_results
+                }
 
                 res.status(200).send({
                   code: "200",
                   message: "Order fetch successful!",
-                  data: specimens,
+                  data: data,
                 });
                 
               }  
