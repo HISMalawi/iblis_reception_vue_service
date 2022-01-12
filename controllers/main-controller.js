@@ -282,8 +282,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     .replace(/T/, " ") // replace T with a space
     .replace(/\..+/, "");
 
-    console.log(toDate)
-
     let visit_ids = [];
 
     let tests = [];
@@ -294,8 +292,10 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
     let specimen_ids = [];
 
+    let patients = [];
+
     dbConnection.query(
-      "SELECT  `id` FROM `visits` WHERE `ward_or_location` = ? AND `created_at` BETWEEN ? AND ?",
+      "SELECT  `id`, `patient_id` FROM `visits` WHERE `ward_or_location` = ? AND `created_at` BETWEEN ? AND ?",
       [`${ward}`, `${fromDate}`, `${toDate}`],
       (err, results, fields) => {
         if (err) {
@@ -311,6 +311,13 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
              let element = results[index];
 
               visit_ids.push(element.id);
+
+              let patient_details = {
+                "id": element.patient_id,
+                "visit_id": element.id
+              }
+
+              patients.push(patient_details);
 
               if (index + 1 == results.length) {
 
@@ -355,6 +362,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
               for (let index = 0; index < results.length; index++) {
 
+                
+
                 tests.push(results[index]);
 
                 if (!specimen_ids.includes(results[index].specimen_id)) {
@@ -362,14 +371,22 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                   specimen_ids.push(results[index].specimen_id);
 
                 } 
+
+                patients.forEach(patient => {
+
+                  if (patient.visit_id == results[index].visit_id) {
+                    patient.specimen_id = results[index].specimen_id;
+                  }
+                  
+                });
                 
               }
 
               if (index + 1 == visit_ids.length) {
 
-                // console.log("tests: "+ tests.length);
 
-                GetTestsWithResults();  
+                GetPatient();  
+
               }  
   
             }
@@ -378,6 +395,45 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         
       }
   
+    }
+
+    function GetPatient() {
+
+      patients.forEach((patient, index) => {
+
+        dbConnection.query(
+          "SELECT * FROM `patients` WHERE `patient_number` = ?",
+          [`${patient.id}`],
+          (err, results, fields) => {
+            if (err) {
+              
+
+            } else {
+
+              if (results.length > 0) {
+
+                patient.name = results[0].name;
+
+                patient.gender = results[0].gender;
+
+                console.log(patient);
+
+                if (index + 1 == results.length) {
+
+                  GetTestsWithResults();
+                  
+                }
+  
+              }
+
+            }
+          }
+        );
+
+
+        
+      });  
+      
     }
 
     function GetTestsWithResults() {
@@ -432,7 +488,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = specimen_ids[index];
         
         dbConnection.query(
-          "SELECT * FROM `specimens` WHERE `id` = ?",
+          "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
           [
             `${element}`
           ],
@@ -458,7 +514,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
                 let data = {
                   "specimens":specimens,
-                  "tests_with_results": tests_with_results
+                  "tests_with_results": tests_with_results,
+                  "patients":patients
                 }
 
                 res.status(200).send({
