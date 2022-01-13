@@ -416,8 +416,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
                 patient.gender = results[0].gender;
 
-                console.log(patient);
-
                 if (index + 1 == results.length) {
 
                   GetTestsWithResults();
