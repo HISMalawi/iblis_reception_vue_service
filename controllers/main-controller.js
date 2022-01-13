@@ -402,7 +402,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
       patients.forEach((patient, index) => {
 
         dbConnection.query(
-          "SELECT * FROM `patients` WHERE `patient_number` = ?",
+          "SELECT * FROM `patients` WHERE `id` = ?",
           [`${patient.id}`],
           (err, results, fields) => {
             if (err) {
