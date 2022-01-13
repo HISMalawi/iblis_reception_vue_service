@@ -862,7 +862,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
     function GetPatient() {
       dbConnection.query(
-        "SELECT * FROM `patients` WHERE `patient_number` = ?",
+        "SELECT * FROM `patients` WHERE `id` = ?",
         [`${patient_id}`],
         (err, results, fields) => {
           if (err) {
