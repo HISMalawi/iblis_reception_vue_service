@@ -534,6 +534,205 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     }
   });
 
+
+  app.post("/patient/orders", auth, (req, res) => {
+
+    let id = req.body.patient_id;
+
+    let visit_ids = [];
+
+    let tests = [];
+
+    let tests_with_results = [];
+
+    let specimens = [];
+
+    let specimen_ids = [];
+
+    dbConnection.query(
+      "SELECT  `id` FROM `visits` WHERE `patient_id` = ?",
+      [`${id}`],
+      (err, results, fields) => {
+        if (err) {
+          res.status(200).send({
+            code: "418",
+            message: "Database visit fetching error!",
+            data: [],
+          });
+        } else {
+          if (results.length > 0) {
+
+            for (let index = 0; index < results.length; index++) {
+             let element = results[index];
+
+              visit_ids.push(element.id);
+
+              if (index + 1 == results.length) {
+
+                // console.log("visits: "+ visit_ids.length);
+
+                GetTests();
+                
+              } 
+             
+            }
+
+          } else {
+            res.status(200).send({
+              code: "418",
+              message: "No data available!",
+              data: [],
+            });
+          }
+        }
+      }
+    );
+
+    function GetTests() {
+
+      for (let index = 0; index < visit_ids.length; index++) {
+        const element = visit_ids[index];
+       
+        dbConnection.query(
+          "SELECT * FROM `tests` WHERE `visit_id` = ?",
+          [
+            `${element}`
+          ],
+          (err, results, fields) => {
+            if (err) {
+  
+              res.status(200).send({
+                code: "418",
+                message: "Database tests fetching error!",
+                data: [],
+              });
+            } else {
+
+              for (let index = 0; index < results.length; index++) {
+
+                
+
+                tests.push(results[index]);
+
+                if (!specimen_ids.includes(results[index].specimen_id)) {
+                  
+                  specimen_ids.push(results[index].specimen_id);
+
+                }
+                
+              }
+
+              if (index + 1 == visit_ids.length) {
+
+
+                GetTestsWithResults();  
+
+              }  
+  
+            }
+          }
+        );
+        
+      }
+  
+    }
+
+    function GetTestsWithResults() {
+
+      for (let index = 0; index < tests.length; index++) {
+        const element = tests[index].id;
+
+        dbConnection.query(
+          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+          [
+            `${element}`
+          ],
+          (err, results, fields) => {
+            if (err) {
+  
+              res.status(200).send({
+                code: "418",
+                message: "Database tests fetching error!",
+                data: [],
+              });
+            } else {
+
+              if (results.length > 0) {
+
+                tests_with_results.push(tests[index]);
+                
+              }
+
+              if (index + 1 == tests.length) {
+
+                GetSpecimes(); 
+                
+              }  
+  
+            }
+          }
+        );
+        
+      }
+  
+    }
+
+    function GetSpecimes() {
+
+      tests.sort().reverse();
+      specimen_ids.sort().reverse();
+
+      for (let index = 0; index < specimen_ids.length; index++) {
+        const element = specimen_ids[index];
+        
+        dbConnection.query(
+          "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
+          [
+            `${element}`
+          ],
+          (err, results, fields) => {
+            if (err) {
+  
+              res.status(200).send({
+                code: "418",
+                message: "Database specimens fetching error!",
+                data: [],
+              });
+            } else {
+              
+              if (results.length > 0) {
+
+                specimens.push(results[0]);
+                
+              }
+
+              if (index + 1 == specimen_ids.length) {
+
+                // console.log("specimens: "+ specimen_ids.length);
+
+                let data = {
+                  "specimens":specimens,
+                  "tests_with_results": tests_with_results
+                }
+
+                res.status(200).send({
+                  code: "200",
+                  message: "Order fetch successful!",
+                  data: data,
+                });
+                
+              }  
+  
+            }
+          }
+        );
+        
+      }
+      
+
+    }
+  });
+
   app.post("/specimen_types", auth, (req, res) => {
     dbConnection.query(
       "SELECT * FROM `specimen_types`",
