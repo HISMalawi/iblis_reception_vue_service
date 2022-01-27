@@ -265,6 +265,275 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     );
   });
 
+  // app.post("/ward/orders", auth, (req, res) => {
+  //   let ward = req.body.ward;
+
+  //   let fromDate = new Date(req.body.from)
+  //   .toISOString()
+  //   .replace(/T/, " ") // replace T with a space
+  //   .replace(/\..+/, "");
+
+  //   let toDateBefore = new Date(req.body.to)
+    
+  //   toDateBefore.setDate(toDateBefore.getDate() + 1);
+
+  //   let toDate = new Date(toDateBefore)
+  //   .toISOString()
+  //   .replace(/T/, " ") // replace T with a space
+  //   .replace(/\..+/, "");
+
+  //   let visit_ids = [];
+
+  //   let tests = [];
+
+  //   let tests_with_results = [];
+
+  //   let specimens = [];
+
+  //   let specimen_ids = [];
+
+  //   let patients = [];
+
+  //   dbConnection.query(
+  //     "SELECT  `id`, `patient_id` FROM `visits` WHERE `ward_or_location` = ? AND `created_at` BETWEEN ? AND ?",
+  //     [`${ward}`, `${fromDate}`, `${toDate}`],
+  //     (err, results, fields) => {
+  //       if (err) {
+  //         res.status(200).send({
+  //           code: "418",
+  //           message: "Database visit fetching error!",
+  //           data: [],
+  //         });
+  //       } else {
+  //         if (results.length > 0) {
+
+  //           for (let index = 0; index < results.length; index++) {
+  //            let element = results[index];
+
+  //             visit_ids.push(element.id);
+
+  //             let patient_details = {
+  //               "id": element.patient_id,
+  //               "visit_id": element.id
+  //             }
+
+  //             patients.push(patient_details);
+
+  //             if (index + 1 == results.length) {
+
+  //               // console.log("visits: "+ visit_ids.length);
+
+  //               GetTests();
+                
+  //             } 
+             
+  //           }
+
+  //         } else {
+  //           res.status(200).send({
+  //             code: "418",
+  //             message: "No data available!",
+  //             data: [],
+  //           });
+  //         }
+  //       }
+  //     }
+  //   );
+
+  //   function GetTests() {
+
+  //     for (let index = 0; index < visit_ids.length; index++) {
+  //       const element = visit_ids[index];
+       
+  //       dbConnection.query(
+  //         "SELECT * FROM `tests` WHERE `visit_id` = ?",
+  //         [
+  //           `${element}`
+  //         ],
+  //         (err, results, fields) => {
+  //           if (err) {
+  
+  //             res.status(200).send({
+  //               code: "418",
+  //               message: "Database tests fetching error!",
+  //               data: [],
+  //             });
+  //           } else {
+
+  //             for (let index = 0; index < results.length; index++) {
+
+                
+
+  //               tests.push(results[index]);
+
+  //               if (!specimen_ids.includes(results[index].specimen_id)) {
+                  
+  //                 specimen_ids.push(results[index].specimen_id);
+
+  //               } 
+
+  //               patients.forEach(patient => {
+
+  //                 if (patient.visit_id == results[index].visit_id) {
+  //                   patient.specimen_id = results[index].specimen_id;
+  //                 }
+                  
+  //               });
+                
+  //             }
+
+  //             if (index + 1 == visit_ids.length) {
+
+
+  //               GetPatient();  
+
+  //             }  
+  
+  //           }
+  //         }
+  //       );
+        
+  //     }
+  
+  //   }
+
+  //   function GetPatient() {
+
+  //     patients.forEach((patient, index) => {
+
+  //       dbConnection.query(
+  //         "SELECT * FROM `patients` WHERE `id` = ?",
+  //         [`${patient.id}`],
+  //         (err, results, fields) => {
+  //           if (err) {
+              
+
+  //           } else {
+
+  //             if (results.length > 0) {
+
+  //               patient.name = results[0].name;
+
+  //               patient.gender = results[0].gender;
+
+  //               if (index + 1 == results.length) {
+
+  //                 GetTestsWithResults();
+                  
+  //               }
+  
+  //             }
+
+  //           }
+  //         }
+  //       );
+
+
+        
+  //     });  
+      
+  //   }
+
+  //   function GetTestsWithResults() {
+
+  //     for (let index = 0; index < tests.length; index++) {
+  //       const element = tests[index].id;
+
+  //       dbConnection.query(
+  //         "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+  //         [
+  //           `${element}`
+  //         ],
+  //         (err, results, fields) => {
+  //           if (err) {
+  
+  //             res.status(200).send({
+  //               code: "418",
+  //               message: "Database tests fetching error!",
+  //               data: [],
+  //             });
+  //           } else {
+
+  //             if (results.length > 0) {
+
+  //               tests_with_results.push(tests[index]);
+                
+  //             }
+
+  //             if (index + 1 == tests.length) {
+
+                
+  //               // console.log("tests with results: "+ tests_with_results.length);
+
+  //               GetSpecimes(); 
+                
+  //             }  
+  
+  //           }
+  //         }
+  //       );
+        
+  //     }
+  
+  //   }
+
+  //   function GetSpecimes() {
+
+  //     tests.sort().reverse();
+  //     specimen_ids.sort().reverse();
+
+  //     for (let index = 0; index < specimen_ids.length; index++) {
+  //       const element = specimen_ids[index];
+        
+  //       dbConnection.query(
+  //         "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
+  //         [
+  //           `${element}`
+  //         ],
+  //         (err, results, fields) => {
+  //           if (err) {
+  
+  //             res.status(200).send({
+  //               code: "418",
+  //               message: "Database specimens fetching error!",
+  //               data: [],
+  //             });
+  //           } else {
+              
+  //             if (results.length > 0) {
+
+  //               specimens.push(results[0]);
+                
+  //             }
+
+  //             if (index + 1 == specimen_ids.length) {
+
+  //               // console.log("specimens: "+ specimen_ids.length);
+
+  //               let data = {
+  //                 "specimens":specimens,
+  //                 "tests_with_results": tests_with_results,
+  //                 "patients":patients
+  //               }
+
+  //               res.status(200).send({
+  //                 code: "200",
+  //                 message: "Order fetch successful!",
+  //                 data: data,
+  //               });
+                
+  //             }  
+  
+  //           }
+  //         }
+  //       );
+        
+  //     }
+      
+
+  //   }
+  // });
+
   app.post("/ward/orders", auth, (req, res) => {
     let ward = req.body.ward;
 
@@ -287,6 +556,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let tests = [];
 
     let tests_with_results = [];
+
+    let tests_with_details = [];
 
     let specimens = [];
 
@@ -465,7 +736,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                 
                 // console.log("tests with results: "+ tests_with_results.length);
 
-                GetSpecimes(); 
+                GetTestsWithDetails();
                 
               }  
   
@@ -475,6 +746,48 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         
       }
   
+    }
+    function GetTestsWithDetails() {
+
+      for (let index = 0; index < specimen_ids.length; index++) {
+        const element = specimen_ids[index];
+       
+        dbConnection.query(
+          "SELECT `tests`.`id`,`test_types`.`short_name` , `test_types`.`name` AS `test_name`,`tests`.`visit_id`, `tests`.`test_type_id`, `tests`.`specimen_id`, `tests`.`interpretation`, `tests`.`test_status_id`, `tests`.`created_by`, `tests`.`tested_by`, `tests`.`verified_by`, `tests`.`requested_by`, `tests`.`time_created`, `tests`.`time_started`, `tests`.`time_completed`, `tests`.`time_verified`, `tests`.`panel_id`, `tests`.`time_sent`, `tests`.`external_id`, `tests`.`not_done_reasons`, `tests`.`person_talked_to_for_not_done` FROM `tests`, `test_types` WHERE `specimen_id` = ? AND `tests`.`test_type_id` = `test_types`.`id`",
+          [
+            `${element}`
+          ],
+          (err, results, fields) => {
+            if (err) {
+  
+              res.status(200).send({
+                code: "418",
+                message: "Database tests fetching error!",
+                data: [],
+              });
+            } else {
+
+              for (let index = 0; index < results.length; index++) {
+
+                
+
+                tests_with_details.push(results[index]);
+                
+              }
+
+              if (index + 1 == specimen_ids.length) {
+
+
+                GetSpecimes(); 
+
+              }  
+  
+            }
+          }
+        );
+        
+      }
+      
     }
 
     function GetSpecimes() {
@@ -513,6 +826,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                 let data = {
                   "specimens":specimens,
                   "tests_with_results": tests_with_results,
+                  "tests_with_details":tests_with_details,
                   "patients":patients
                 }
 
@@ -533,8 +847,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
     }
   });
-
-
   app.post("/patient/orders", auth, (req, res) => {
 
     let id = req.body.patient_id;
