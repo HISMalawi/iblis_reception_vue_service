@@ -966,6 +966,16 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         ]);
       });
 
+      zplTestNames = []
+      tests.forEach((test) => {
+        if (test.short_name == ''){
+          testname = test.name;
+        }
+        else{
+          testname = test.short_name;
+        }
+        zplTestNames.push(testname);
+      })
       let sql =
         "INSERT INTO `tests` (`visit_id`, `test_type_id`, `specimen_id`, `test_status_id`, `created_by`, `tested_by`, `verified_by`, `requested_by`, `time_created`, `not_done_reasons`, `person_talked_to_for_not_done`) VALUES ?";
 
@@ -981,8 +991,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         } else {
           let data = {
             accessionNumber: accession_number,
+            zplTestNames: zplTestNames
           };
-
           res.status(200).send({
             code: "200",
             message:
