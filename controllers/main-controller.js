@@ -949,8 +949,16 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
     function InsertTests(visit_id, specimen_id) {
       let orders = [];
-
+      let zplTestNames = [];
       tests.forEach((test) => {
+        if (test.short_name == ''){
+          testname = test.name;
+        }
+        else{
+          testname = test.short_name;
+        }
+        zplTestNames.push(testname);
+
         orders.push([
           `${visit_id}`,
           `${test.id}`,
@@ -965,17 +973,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
           "null",
         ]);
       });
-
-      zplTestNames = []
-      tests.forEach((test) => {
-        if (test.short_name == ''){
-          testname = test.name;
-        }
-        else{
-          testname = test.short_name;
-        }
-        zplTestNames.push(testname);
-      })
       let sql =
         "INSERT INTO `tests` (`visit_id`, `test_type_id`, `specimen_id`, `test_status_id`, `created_by`, `tested_by`, `verified_by`, `requested_by`, `time_created`, `not_done_reasons`, `person_talked_to_for_not_done`) VALUES ?";
 
