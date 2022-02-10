@@ -1000,6 +1000,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         }
       });
     }
+
   });
 
   app.post("/orders/search", auth, (req, res) => {
@@ -1014,6 +1015,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let tests = [];
     let patient_id;
     let patient;
+    let users = [];
 
     dbConnection.query(
       "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE (`specimens`.`tracking_number` = ? OR `specimens`.`accession_number` = ?) AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
@@ -1034,6 +1036,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
             specimen_type = data.specimen_type;
 
             GetTests();
+            GetUsers();
           } else {
             res.status(200).send({
               code: "418",
@@ -1108,7 +1111,33 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         }
       );
     }
+    
+    function GetUsers(){
+      dbConnection.query(
+        "SELECT `users`.`id`, `users`.`name` AS `lab_technician` FROM `users`",
+        (err, results, fields) => {
+          if (err) {
+            console.log(err);
 
+            res.status(200).send({
+              code: "418",
+              message: "Database Users fetching error!",
+              data: [],
+            });
+          } else {
+            if (results.length > 0) {
+              users = results;
+            } else {
+              res.status(200).send({
+                code: "418",
+                message: "No data available!",
+                data: [],
+              });
+            }
+          }
+        }
+      );
+    }
     function GetPatient() {
       dbConnection.query(
         "SELECT * FROM `patients` WHERE `id` = ?",
@@ -1123,7 +1152,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
           } else {
             if (results.length > 0) {
               patient = results;
-
               SendResponse();
             } else {
               res.status(200).send({
@@ -1138,7 +1166,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     }
 
     function SendResponse() {
-
       let orders = [{
         id: specimen_id,
         specimen_type: specimen_type,
@@ -1152,9 +1179,9 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
 
       let data = {
         orders:orders,
-        tests:tests
+        tests:tests,
+        users:users
       };
-
       res.status(200).send({
         code: "200",
         message: "Order fetch successful!",
