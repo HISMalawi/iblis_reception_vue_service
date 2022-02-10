@@ -1118,21 +1118,9 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         (err, results, fields) => {
           if (err) {
             console.log(err);
-
-            res.status(200).send({
-              code: "418",
-              message: "Database Users fetching error!",
-              data: [],
-            });
           } else {
             if (results.length > 0) {
               users = results;
-            } else {
-              res.status(200).send({
-                code: "418",
-                message: "No data available!",
-                data: [],
-              });
             }
           }
         }
