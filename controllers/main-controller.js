@@ -442,7 +442,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = tests[index].id;
 
         dbConnection.query(
-          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures`, `measure_ranges` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
           [
             `${element}`
           ],
@@ -685,7 +685,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = tests[index].id;
 
         dbConnection.query(
-          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures`, `measure_ranges` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
           [
             `${element}`
           ],
@@ -1200,7 +1200,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let test_id = req.body.test_id;
 
     dbConnection.query(
-      "SELECT `test_results`.`id`, `test_results`.`measure_id`,`test_results`.`test_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+      "SELECT `test_results`.`id`, `test_results`.`measure_id`,`test_results`.`test_id`, `measures`.`name` AS `measure_name`,`measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`,  `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures`, `measure_ranges` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `measures`.`id` = `measure_ranges`.`measure_id` AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
       [`${test_id}`],
       (err, results, fields) => {
         if (err) {
@@ -1304,7 +1304,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
       let test = tests[index];
 
       dbConnection.query(
-        "SELECT `test_results`.`id`,`test_results`.`test_id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+        "SELECT `test_results`.`id`,`test_results`.`test_id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`,`test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results` INNER JOIN `measures` ON `measures`.`id` = `test_results`.`measure_id` INNER JOIN `measure_ranges`  ON `test_results`.`measure_id` = `measure_ranges`.`measure_id` WHERE `test_results`.`test_id` = ? AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
         [`${test.id}`],
         (err, results, fields) => {
           if (err) {
