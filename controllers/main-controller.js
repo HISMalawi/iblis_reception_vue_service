@@ -1016,6 +1016,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let patient;
     let users = [];
     let labSections = [];
+    let printCount = [];
 
     dbConnection.query(
       "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`accepted_by`,`specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE (`specimens`.`tracking_number` = ? OR `specimens`.`accession_number` = ?) AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
@@ -1034,7 +1035,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
             specimen_id = data.id;
 
             specimen_type = data.specimen_type;
-
+            
+            GetPrintCount(specimen_id)
             GetTests();
             GetLabSections()
             GetUsers();
@@ -1128,6 +1130,22 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
       );
     }
 
+    function GetPrintCount(id){
+      dbConnection.query(
+        "SELECT count(*) AS number_printed FROM `patient_report_print_statuses` INNER JOIN `specimens` ON `specimens`.`id`=`patient_report_print_statuses`.`specimen_id` WHERE `specimens`.`id`=?",
+        [`${id}`],
+        (err, results, fields) => {
+          if (err) {
+            console.log(err);
+          } else {
+            if (results.length > 0) {
+              printCount = results;
+            }
+          }
+        }
+      );
+    }
+
     function GetLabSections(){
       dbConnection.query(
         "SELECT `test_types`.`name` AS `test_name`,`test_categories`.`name` AS `lab_location` FROM `test_categories` INNER JOIN `test_types` ON `test_types`.`test_category_id`=`test_categories`.`id`",
@@ -1186,7 +1204,8 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         orders:orders,
         tests:tests,
         users:users,
-        labSections:labSections
+        labSections:labSections,
+        printCount:printCount
       };
       res.status(200).send({
         code: "200",
