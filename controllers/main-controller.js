@@ -442,7 +442,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = tests[index].id;
 
         dbConnection.query(
-          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures`, `measure_ranges` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
           [
             `${element}`
           ],
@@ -530,7 +530,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = specimen_ids[index];
         
         dbConnection.query(
-          "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
+          "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`accepted_by`,`specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
           [
             `${element}`
           ],
@@ -560,7 +560,6 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
                   "tests_with_details":tests_with_details,
                   "patients":patients
                 }
-
                 res.status(200).send({
                   code: "200",
                   message: "Order fetch successful!",
@@ -686,7 +685,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = tests[index].id;
 
         dbConnection.query(
-          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+          "SELECT `test_results`.`id`, `test_results`.`measure_id` AS `specimen_id`, `measures`.`name` AS `measure_name`, `measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures`, `measure_ranges` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
           [
             `${element}`
           ],
@@ -729,7 +728,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         const element = specimen_ids[index];
         
         dbConnection.query(
-          "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
+          "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`accepted_by`,`specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE `specimens`.`id` = ? AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
           [
             `${element}`
           ],
@@ -1016,9 +1015,11 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let patient_id;
     let patient;
     let users = [];
+    let labSections = [];
+    let printCount = [];
 
     dbConnection.query(
-      "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE (`specimens`.`tracking_number` = ? OR `specimens`.`accession_number` = ?) AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
+      "SELECT `specimens`.`id`, `specimen_types`.`name` AS `specimen_type`, `specimens`.`accession_number`, `specimens`.`tracking_number`, `specimens`.`priority` , `specimens`.`accepted_by`,`specimens`.`drawn_by_id`, `specimens`.`drawn_by_name`, `specimens`.`specimen_status_id` , `specimens`.`rejected_by`, `specimens`.`rejection_reason_id`, `specimens`.`reject_explained_to`, `specimens`.`referral_id`, `specimens`.`time_accepted`, `specimens`.`time_rejected`, `specimens`.`date_of_collection` FROM `specimens`, `specimen_types` WHERE (`specimens`.`tracking_number` = ? OR `specimens`.`accession_number` = ?) AND `specimen_types`.`id` = `specimens`.`specimen_type_id`",
       [`${tracking_number}`, `${tracking_number}`],
       (err, results, fields) => {
         if (err) {
@@ -1034,8 +1035,10 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
             specimen_id = data.id;
 
             specimen_type = data.specimen_type;
-
+            
+            GetPrintCount(specimen_id)
             GetTests();
+            GetLabSections()
             GetUsers();
           } else {
             res.status(200).send({
@@ -1126,6 +1129,38 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
         }
       );
     }
+
+    function GetPrintCount(id){
+      dbConnection.query(
+        "SELECT count(*) AS number_printed FROM `patient_report_print_statuses` INNER JOIN `specimens` ON `specimens`.`id`=`patient_report_print_statuses`.`specimen_id` WHERE `specimens`.`id`=?",
+        [`${id}`],
+        (err, results, fields) => {
+          if (err) {
+            console.log(err);
+          } else {
+            if (results.length > 0) {
+              printCount = results;
+            }
+          }
+        }
+      );
+    }
+
+    function GetLabSections(){
+      dbConnection.query(
+        "SELECT `test_types`.`name` AS `test_name`,`test_categories`.`name` AS `lab_location` FROM `test_categories` INNER JOIN `test_types` ON `test_types`.`test_category_id`=`test_categories`.`id`",
+        (err, results, fields) => {
+          if (err) {
+            console.log(err);
+          } else {
+            if (results.length > 0) {
+              labSections = results;
+            }
+          }
+        }
+      );
+    }
+
     function GetPatient() {
       dbConnection.query(
         "SELECT * FROM `patients` WHERE `id` = ?",
@@ -1168,7 +1203,9 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
       let data = {
         orders:orders,
         tests:tests,
-        users:users
+        users:users,
+        labSections:labSections,
+        printCount:printCount
       };
       res.status(200).send({
         code: "200",
@@ -1182,7 +1219,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
     let test_id = req.body.test_id;
 
     dbConnection.query(
-      "SELECT `test_results`.`id`, `test_results`.`measure_id`,`test_results`.`test_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+      "SELECT `test_results`.`id`, `test_results`.`measure_id`,`test_results`.`test_id`, `measures`.`name` AS `measure_name`,`measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`,  `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures`, `measure_ranges` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `measures`.`id` = `measure_ranges`.`measure_id` AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
       [`${test_id}`],
       (err, results, fields) => {
         if (err) {
@@ -1286,7 +1323,7 @@ module.exports = (app, dbConnection, FACILITY_CODE) => {
       let test = tests[index];
 
       dbConnection.query(
-        "SELECT `test_results`.`id`,`test_results`.`test_id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results`, `measures` WHERE `test_results`.`test_id` = ? AND `measures`.`id` = `test_results`.`measure_id` AND `test_results`.`result` <> '' ",
+        "SELECT `test_results`.`id`,`test_results`.`test_id`, `test_results`.`measure_id`, `measures`.`name` AS `measure_name`, `measure_ranges`.`range_lower`, `measure_ranges`.`range_upper`, `measures`.`unit` AS `measure_unit`,`test_results`.`result`,`test_results`.`device_name`, `test_results`.`time_entered` FROM `test_results` INNER JOIN `measures` ON `measures`.`id` = `test_results`.`measure_id` INNER JOIN `measure_ranges`  ON `test_results`.`measure_id` = `measure_ranges`.`measure_id` WHERE `test_results`.`test_id` = ? AND `test_results`.`result` <> '' GROUP BY `test_results`.`measure_id`",
         [`${test.id}`],
         (err, results, fields) => {
           if (err) {
